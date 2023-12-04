@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <title>Project 2</title>
+
+    <script id="vertex-shader" type="x-shader/x-vertex">
+      attribute vec4 vertexPosition;
+      attribute vec4 vertexColor;
+
+      attribute vec2 textureCoordinate;
+      varying vec2 fTextureCoordinate;
+
+      uniform float alpha;
+      uniform float beta;
+      uniform float gamma;
+
+      uniform float scaleX, scaleY;
+      uniform float transX, transY;
+      mat4 M_x; mat4 M_y; mat4 M_z;
+      mat4 M_Scale;
+      mat4 M_Translate;
+
+      void main() {
+        M_x = mat4
+        (
+            1, 0, 0, 0,
+            0, cos(alpha), -sin(alpha), 0,
+            0, sin(alpha), cos(alpha), 0,
+            0, 0, 0, 1
+        );
+
+        M_y = mat4
+        (
+            cos(beta), 0, -sin(beta), 0,
+            0, 1, 0, 0,
+            sin(beta), 0, cos(beta), 0,
+            0, 0, 0, 1
+        );
+
+        M_z = mat4
+        (
+            cos(gamma), -sin(gamma), 0, 0,
+            sin(gamma), cos(gamma), 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        );
+
+        M_Translate = mat4
+        (
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            transX, transY, 0, 1
+        );
+
+        M_Scale = mat4
+        (
+            scaleX, 0, 0, 0,
+            0, scaleY, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        );
+
+
+
+        gl_Position = M_Translate* M_z * M_y * M_x * M_Scale  * vertexPosition;
+        fTextureCoordinate = textureCoordinate;
+      }
+    </script>
+
+    <script id="fragment-shader" type="x-shader/x-fragment">
+      precision mediump float;
+
+      varying vec2 fTextureCoordinate;
+      uniform sampler2D texMap0;
+
+      void main() {
+        vec4 color0 = texture2D( texMap0, fTextureCoordinate );
+        gl_FragColor.r = color0.r;
+        gl_FragColor.g = color0.g;
+        gl_FragColor.b = color0.b;
+        gl_FragColor.a = 1.0;
+      }
+    </script>
+
+    <script type="text/javascript" src="./Common/webgl-utils.js"></script>
+    <script type="text/javascript" src="./Common/initShaders.js"></script>
+    <script type="text/javascript" src="./Common/MV.js"></script>
+
+    <script type="text/javascript" src="Project2.js"></script>
+  </head>
+
+  <body onload="init()">
+    <canvas id="gl-canvas" width="512" height="512"></canvas>
+    <img id="textureImage" hidden src="texture.jpg" />
+    <br />
+    <p>Key Bindings</p>
+    <ul>
+      <li>'z': Rotate Around X</li>
+      <li>'x': Rotate Around Y</li>
+      <li>'c': Rotate Around Z</li>
+      <li>'a': Scale Up on X</li>
+      <li>'d': Scale Down on X</li>
+      <li>'w': Scale Up on Y</li>
+      <li>'s': Scale Down on Y</li>
+      <li>'j': Translate Left on X</li>
+      <li>'l': Translate Right on X</li>
+      <li>'i': Translate Up on Y</li>
+      <li>'k': Translate Down on Y</li>
+    </ul>
+  </body>
+</html>
