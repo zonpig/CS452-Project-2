@@ -15,7 +15,6 @@
       uniform float beta;
       uniform float gamma;
 
-      uniform float scaleX, scaleY;
       uniform float transX, transY;
       mat4 M_x; mat4 M_y; mat4 M_z;
       mat4 M_Scale;
@@ -54,17 +53,9 @@
             transX, transY, 0, 1
         );
 
-        M_Scale = mat4
-        (
-            scaleX, 0, 0, 0,
-            0, scaleY, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-        );
 
 
-
-        gl_Position = M_Translate* M_z * M_y * M_x * M_Scale  * vertexPosition;
+        gl_Position = M_Translate* M_z * M_y * M_x * vertexPosition;
         fTextureCoordinate = textureCoordinate;
       }
     </script>
@@ -94,16 +85,15 @@
   <body onload="init()">
     <canvas id="gl-canvas" width="512" height="512"></canvas>
     <img id="textureImage" hidden src="texture.jpg" />
+    <img id="chairPicture" hidden src="chair.png" />
+    <img id="deskPicture" hidden src="desk.jpg" />
+    <img id="laptopPicture" hidden src="laptop.jpg" />
     <br />
     <p>Key Bindings</p>
     <ul>
       <li>'z': Rotate Around X</li>
       <li>'x': Rotate Around Y</li>
       <li>'c': Rotate Around Z</li>
-      <li>'a': Scale Up on X</li>
-      <li>'d': Scale Down on X</li>
-      <li>'w': Scale Up on Y</li>
-      <li>'s': Scale Down on Y</li>
       <li>'j': Translate Left on X</li>
       <li>'l': Translate Right on X</li>
       <li>'i': Translate Up on Y</li>
