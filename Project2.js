@@ -4,8 +4,6 @@ var alpha, beta, gamma; // Rotation angles around x, y and z axes
 var transX, transY; // Translation factors along x and y axes
 var textureImage;
 
-var chairImage, deskImage, laptopImage;
-
 function init() {
   var canvas = document.getElementById("gl-canvas");
   gl = WebGLUtils.setupWebGL(canvas);
@@ -13,10 +11,10 @@ function init() {
   if (!gl) {
     alert("WebGL is not available on this browser.");
   }
-  gl.viewport(0, 0, 512, 512);
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
-
   gl.enable(gl.DEPTH_TEST);
+  gl.viewport(0, 0, 512, 512);
+  gl.clearColor(0.843, 0.851, 0.69, 1.0);
+
   myShaderProgram = initShaders(gl, "vertex-shader", "fragment-shader");
   gl.useProgram(myShaderProgram);
 
@@ -26,107 +24,87 @@ function init() {
   transX = 0;
   transY = 0;
 
-  // Tetrahedron vertices
-  var tetrahedronVertices = [
-    0.0,
-    0.5,
-    -Math.sqrt(3) / 6,
-    -0.5,
-    -0.5,
-    -Math.sqrt(3) / 6,
-    0.5,
-    -0.5,
-    -Math.sqrt(3) / 6,
+  // eye
+  var eye = vec3(0.0, 1.5, 3);
+  var at = vec3(0.0, 0.0, 0.0); // at point
+  var vup = vec3(0.0, 1.0, 0.0); // up vector
+  var n = normalize(vec3(eye[0] - at[0], eye[1] - at[1], eye[2] - at[2]));
+  var u = normalize(cross(vup, n));
+  var v = normalize(cross(n, u));
 
+  var M = [
+    u[0],
+    v[0],
+    n[0],
     0.0,
-    0.5,
-    -Math.sqrt(3) / 6,
-    -0.5,
-    -0.5,
-    -Math.sqrt(3) / 6,
+    u[1],
+    v[1],
+    n[1],
     0.0,
+    u[2],
+    v[2],
+    n[2],
     0.0,
-    Math.sqrt(3) / 3,
-
-    -0.5,
-    -0.5,
-    -Math.sqrt(3) / 6,
-    0.5,
-    -0.5,
-    -Math.sqrt(3) / 6,
-    0.0,
-    0.0,
-    Math.sqrt(3) / 3,
-
-    0.5,
-    -0.5,
-    -Math.sqrt(3) / 6,
-    0.0,
-    0.5,
-    -Math.sqrt(3) / 6,
-    0.0,
-    0.0,
-    Math.sqrt(3) / 3,
+    -dot(eye, u),
+    -dot(eye, v),
+    -dot(eye, n),
+    1.0,
   ];
 
-  // Tetrahedron texture
-  var textureCoordinates = [
-    // Face 1
-    0.0, 0.0, 1.0, 0.0, 0.5, 1.0,
-
-    // Face 2
-    0.0, 0.0, 1.0, 0.0, 0.5, 1.0,
-
-    // Face 3
-    0.0, 0.0, 1.0, 0.0, 0.5, 1.0,
-
-    // Face 4
-    0.0, 0.0, 1.0, 0.0, 0.5, 1.0,
+  var Minvt = [
+    u[0],
+    v[0],
+    n[0],
+    eye[0],
+    u[1],
+    v[1],
+    n[1],
+    eye[1],
+    u[2],
+    v[2],
+    n[2],
+    eye[2],
+    0.0,
+    0.0,
+    0.0,
+    1.0,
   ];
 
-  // Tetrahedron faces (filled triangles)
-  var tetrahedronIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  var nearPlane = 0.1;
+  var farPlane = 100.0;
+  var rightPlane = 0.1;
+  var leftPlane = -rightPlane;
+  var topPlane = 0.1;
+  var bottomPlane = -topPlane;
 
-  var myImage = document.getElementById("textureImage");
+  var P_persp = [
+    (2.0 * nearPlane) / (rightPlane - leftPlane),
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    (2.0 * nearPlane) / (topPlane - bottomPlane),
+    0.0,
+    0.0,
+    (rightPlane + leftPlane) / (rightPlane - leftPlane),
+    (topPlane + bottomPlane) / (topPlane - bottomPlane),
+    -(farPlane + nearPlane) / (farPlane - nearPlane),
+    -1.0,
+    0.0,
+    0.0,
+    (-2.0 * farPlane * nearPlane) / (farPlane - nearPlane),
+    0.0,
+  ];
 
-  textureImage = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, textureImage);
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, myImage);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(
-    gl.TEXTURE_2D,
-    gl.TEXTURE_MIN_FILTER,
-    gl.LINEAR_MIPMAP_NEAREST
-  );
-  gl.generateMipmap(gl.TEXTURE_2D);
+  first_light();
+  second_light();
 
-  iBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuffer);
-  gl.bufferData(
-    gl.ELEMENT_ARRAY_BUFFER,
-    new Uint16Array(tetrahedronIndices),
-    gl.STATIC_DRAW
-  );
-
-  var vertexBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, flatten(tetrahedronVertices), gl.STATIC_DRAW);
-
-  var vertexPosition = gl.getAttribLocation(myShaderProgram, "vertexPosition");
-  gl.vertexAttribPointer(vertexPosition, 3, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(vertexPosition);
-
-  var textureVertexbuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, textureVertexbuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, flatten(textureCoordinates), gl.STATIC_DRAW);
-
-  var textureCoordinate = gl.getAttribLocation(
-    myShaderProgram,
-    "textureCoordinate"
-  );
-  gl.vertexAttribPointer(textureCoordinate, 2, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(textureCoordinate);
+  var Muniform = gl.getUniformLocation(myShaderProgram, "M");
+  gl.uniformMatrix4fv(Muniform, false, M);
+  var Minvtuniform = gl.getUniformLocation(myShaderProgram, "Minvt");
+  gl.uniformMatrix4fv(Minvtuniform, false, Minvt);
+  var Ppuniform = gl.getUniformLocation(myShaderProgram, "P_persp");
+  gl.uniformMatrix4fv(Ppuniform, false, P_persp);
 
   transXLoc = gl.getUniformLocation(myShaderProgram, "transX");
   gl.uniform1f(transXLoc, transX);
@@ -136,300 +114,289 @@ function init() {
   render();
 }
 
+function first_light() {
+  ////////////// 1st (Point Light Source) //////////////
+
+  // Set up coefficients for the object (ambient, diffuse, specular, shininess)
+
+  var p0 = [0.0, 0.0, -10.0]; // only for Point Light Source
+
+  var Ia = [0.1, 0.1, 0.1];
+  var Id = [0.8, 0.8, 0.8];
+  var Is = [0.8, 0.8, 0.8];
+
+  var ka = [0.5, 0.5, 0.5];
+  var kd = [0.5, 0.5, 0.5];
+  var ks = [1.0, 1.0, 1.0];
+
+  var alpha1 = 4.0;
+
+  // send coefficients to the shader program
+
+  var p0loc = gl.getUniformLocation(myShaderProgram, "p0");
+  var Ialoc = gl.getUniformLocation(myShaderProgram, "Ia");
+  var Idloc = gl.getUniformLocation(myShaderProgram, "Id");
+  var Isloc = gl.getUniformLocation(myShaderProgram, "Is");
+  var kaloc = gl.getUniformLocation(myShaderProgram, "ka");
+  var kdloc = gl.getUniformLocation(myShaderProgram, "kd");
+  var ksloc = gl.getUniformLocation(myShaderProgram, "ks");
+  var alphaloc = gl.getUniformLocation(myShaderProgram, "alpha1");
+
+  gl.uniform3fv(p0loc, p0);
+  gl.uniform3fv(Ialoc, Ia);
+  gl.uniform3fv(Idloc, Id);
+  gl.uniform3fv(Isloc, Is);
+  gl.uniform3fv(kaloc, ka);
+  gl.uniform3fv(kdloc, kd);
+  gl.uniform3fv(ksloc, ks);
+  gl.uniform1f(alphaloc, alpha);
+}
+
+function second_light() {
+  ////////////// 2nd (Directional Light) //////////////
+
+  // Set up coefficients for the object (ambient, diffuse, specular, shininess)
+
+  var direction = [0.0, 10.0, 10.0];
+
+  var Ia2 = [0.2, 0.1, 0.2];
+  var Id2 = [0.7, 0.5, 0.7];
+  var Is2 = [0.8, 0.8, 0.8];
+
+  var ka2 = [0.5, 0.5, 0.5];
+  var kd2 = [0.5, 0.5, 0.5];
+  var ks2 = [1.0, 1.0, 1.0];
+
+  var alpha2 = 3.0;
+
+  // send coefficients to the shader program
+
+  var Ia2loc = gl.getUniformLocation(myShaderProgram, "Ia2");
+  var Id2loc = gl.getUniformLocation(myShaderProgram, "Id2");
+  var Is2loc = gl.getUniformLocation(myShaderProgram, "Is2");
+  var ka2loc = gl.getUniformLocation(myShaderProgram, "ka2");
+  var kd2loc = gl.getUniformLocation(myShaderProgram, "kd2");
+  var ks2loc = gl.getUniformLocation(myShaderProgram, "ks2");
+  var directionLoc = gl.getUniformLocation(myShaderProgram, "direction");
+  var alpha2loc = gl.getUniformLocation(myShaderProgram, "alpha2");
+
+  gl.uniform3fv(Ia2loc, Ia2);
+  gl.uniform3fv(Id2loc, Id2);
+  gl.uniform3fv(Is2loc, Is2);
+  gl.uniform3fv(ka2loc, ka2);
+  gl.uniform3fv(kd2loc, kd2);
+  gl.uniform3fv(ks2loc, ks2);
+  gl.uniform3fv(directionLoc, direction);
+  gl.uniform1f(alpha2loc, alpha2);
+}
+
 function render() {
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, textureImage);
-  gl.uniform1f(gl.getUniformLocation(myShaderProgram, "texMap0"), 0);
-
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  var numVertices = 12;
-
-  gl.drawElements(gl.TRIANGLES, numVertices, gl.UNSIGNED_SHORT, 0);
+  drawBox();
+  drawTableTop();
+  drawTableLeg();
+  drawChair();
   requestAnimFrame(render);
 }
 
-function drawTable() {
+function drawTableTop() {
+  // Vertices for the table top
   var vertices = [
-    vec4(-0.5, 0.01, -0.2), //TOP
-    vec4(-0.5, -0.01, -0.2),
-    vec4(0.5, -0.01, -0.2),
-    vec4(0.5, 0.01, -0.2),
-    vec4(0.5, 0.01, 0.2),
-    vec4(-0.5, 0.01, 0.2),
-    vec4(-0.5, -0.01, 0.2),
-    vec4(0.5, -0.01, 0.2),
+    // Front face
+    -1.5,
+    0.1,
+    1.5, // Vertex 0
+    1.5,
+    0.1,
+    1.5, // Vertex 1
+    1.5,
+    0.2,
+    1.5, // Vertex 2
+    -1.5,
+    0.2,
+    1.5, // Vertex 3
 
-    vec4(-0.01 + 0.49, 0.1 - 0.1, -0.01 + 0.19), //LEG1
-    vec4(-0.01 + 0.49, -0.1 - 0.1, -0.01 + 0.19),
-    vec4(0.01 + 0.49, -0.1 - 0.1, -0.01 + 0.19),
-    vec4(0.01 + 0.49, 0.1 - 0.1, -0.01 + 0.19),
-    vec4(0.01 + 0.49, 0.1 - 0.1, 0.01 + 0.19),
-    vec4(-0.01 + 0.49, 0.1 - 0.1, 0.01 + 0.19),
-    vec4(-0.01 + 0.49, -0.1 - 0.1, 0.01 + 0.19),
-    vec4(0.01 + 0.49, -0.1 - 0.1, 0.01 + 0.19),
+    // Back face
+    -1.5,
+    0.1,
+    -1.5, // Vertex 4
+    -1.5,
+    0.2,
+    -1.5, // Vertex 5
+    1.5,
+    0.2,
+    -1.5, // Vertex 6
+    1.5,
+    0.1,
+    -1.5, // Vertex 7
 
-    vec4(-0.01 - 0.49, 0.1 - 0.1, -0.01 - 0.19), //LEG2
-    vec4(-0.01 - 0.49, -0.1 - 0.1, -0.01 - 0.19),
-    vec4(0.01 - 0.49, -0.1 - 0.1, -0.01 - 0.19),
-    vec4(0.01 - 0.49, 0.1 - 0.1, -0.01 - 0.19),
-    vec4(0.01 - 0.49, 0.1 - 0.1, 0.01 - 0.19),
-    vec4(-0.01 - 0.49, 0.1 - 0.1, 0.01 - 0.19),
-    vec4(-0.01 - 0.49, -0.1 - 0.1, 0.01 - 0.19),
-    vec4(0.01 - 0.49, -0.1 - 0.1, 0.01 - 0.19),
+    // Top face
+    -1.5,
+    0.2,
+    -1.5, // Vertex 3 (Repeated for continuity)
+    -1.5,
+    0.2,
+    1.5, // Vertex 2 (Repeated for continuity)
+    1.5,
+    0.2,
+    1.5, // Vertex 6 (Repeated for continuity)
+    1.5,
+    0.2,
+    -1.5, // Vertex 7 (Repeated for continuity)
 
-    vec4(-0.01 + 0.49, 0.1 - 0.1, -0.01 - 0.19), //LEG3
-    vec4(-0.01 + 0.49, -0.1 - 0.1, -0.01 - 0.19),
-    vec4(0.01 + 0.49, -0.1 - 0.1, -0.01 - 0.19),
-    vec4(0.01 + 0.49, 0.1 - 0.1, -0.01 - 0.19),
-    vec4(0.01 + 0.49, 0.1 - 0.1, 0.01 - 0.19),
-    vec4(-0.01 + 0.49, 0.1 - 0.1, 0.01 - 0.19),
-    vec4(-0.01 + 0.49, -0.1 - 0.1, 0.01 - 0.19),
-    vec4(0.01 + 0.49, -0.1 - 0.1, 0.01 - 0.19),
+    // Bottom face
+    -1.5,
+    0.1,
+    -1.5, // Vertex 4 (Repeated for continuity)
+    1.5,
+    0.1,
+    -1.5, // Vertex 7 (Repeated for continuity)
+    1.5,
+    0.1,
+    1.5, // Vertex 1 (Repeated for continuity)
+    -1.5,
+    0.1,
+    1.5, // Vertex 0 (Repeated for continuity)
 
-    vec4(-0.01 - 0.49, 0.1 - 0.1, -0.01 + 0.19), //LEG4
-    vec4(-0.01 - 0.49, -0.1 - 0.1, -0.01 + 0.19),
-    vec4(0.01 - 0.49, -0.1 - 0.1, -0.01 + 0.19),
-    vec4(0.01 - 0.49, 0.1 - 0.1, -0.01 + 0.19),
-    vec4(0.01 - 0.49, 0.1 - 0.1, 0.01 + 0.19),
-    vec4(-0.01 - 0.49, 0.1 - 0.1, 0.01 + 0.19),
-    vec4(-0.01 - 0.49, -0.1 - 0.1, 0.01 + 0.19),
-    vec4(0.01 - 0.49, -0.1 - 0.1, 0.01 + 0.19),
+    // Right face
+    1.5,
+    0.1,
+    -1.5, // Vertex 7 (Repeated for continuity)
+    1.5,
+    0.2,
+    -1.5, // Vertex 6 (Repeated for continuity)
+    1.5,
+    0.2,
+    1.5, // Vertex 2 (Repeated for continuity)
+    1.5,
+    0.1,
+    1.5, // Vertex 1 (Repeated for continuity)
+
+    // Left face
+    -1.5,
+    0.1,
+    -1.5, // Vertex 4 (Repeated for continuity)
+    -1.5,
+    0.1,
+    1.5, // Vertex 0 (Repeated for continuity)
+    -1.5,
+    0.2,
+    1.5, // Vertex 3 (Repeated for continuity)
+    -1.5,
+    0.2,
+    -1.5, // Vertex 5 (Repeated for continuity)
   ];
 
+  // Texture coordinates for the table top
   var textureCoordinates = [
-    vec2(0.0, 0.0), //top
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
-    vec2(0.0, 0.0),
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
+    // Front
+    0.0,
+    0.0, // Vertex 0
+    1.0,
+    0.0, // Vertex 1
+    1.0,
+    1.0, // Vertex 2
+    0.0,
+    1.0, // Vertex 3
 
-    vec2(0.0, 0.0), //leg1
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
-    vec2(0.0, 0.0),
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
+    // Back
+    1.0,
+    0.0, // Vertex 4 (Flipped)
+    0.0,
+    0.0, // Vertex 5 (Flipped)
+    0.0,
+    1.0, // Vertex 6 (Flipped)
+    1.0,
+    1.0, // Vertex 7 (Flipped)
 
-    vec2(0.0, 0.0), //leg2
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
-    vec2(0.0, 0.0),
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
+    // Top
+    0.0,
+    1.0, // Vertex 3 (Repeated for continuity)
+    1.0,
+    1.0, // Vertex 2 (Repeated for continuity)
+    1.0,
+    0.0, // Vertex 6 (Repeated for continuity)
+    0.0,
+    0.0, // Vertex 7 (Repeated for continuity)
 
-    vec2(0.0, 0.0), //leg3
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
-    vec2(0.0, 0.0),
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
+    // Bottom
+    0.0,
+    0.0, // Vertex 4 (Repeated for continuity)
+    1.0,
+    0.0, // Vertex 7 (Repeated for continuity)
+    1.0,
+    1.0, // Vertex 1 (Repeated for continuity)
+    0.0,
+    1.0, // Vertex 0 (Repeated for continuity)
 
-    vec2(0.0, 0.0), //leg4
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
-    vec2(0.0, 0.0),
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
+    // Right
+    1.0,
+    0.0, // Vertex 7 (Repeated for continuity)
+    0.0,
+    0.0, // Vertex 6 (Repeated for continuity)
+    0.0,
+    1.0, // Vertex 2 (Repeated for continuity)
+    1.0,
+    1.0, // Vertex 1 (Repeated for continuity)
+
+    // Left
+    0.0,
+    0.0, // Vertex 4 (Repeated for continuity)
+    1.0,
+    0.0, // Vertex 0 (Repeated for continuity)
+    1.0,
+    1.0, // Vertex 3 (Repeated for continuity)
+    0.0,
+    1.0, // Vertex 5 (Repeated for continuity)
   ];
 
+  // Index list for rendering the table top
   var indexList = [
     0,
     1,
-    3,
-    1,
     2,
-    3,
-    6,
-    5,
-    7,
-    4,
-    7,
-    5,
-    0,
-    6,
-    1,
-    5,
-    6,
     0,
     2,
-    4,
-    3,
-    2,
-    7,
-    4,
-    0,
+    3, // Front face
     4,
     5,
-    0,
-    3,
+    6,
     4,
-    2,
-    1,
     6,
-    2,
-    6,
-    7,
-
-    0 + 8,
-    1 + 8,
-    3 + 8,
-    1 + 8,
-    2 + 8,
-    3 + 8,
-    6 + 8,
-    5 + 8,
-    7 + 8,
-    4 + 8,
-    7 + 8,
-    5 + 8,
-    0 + 8,
-    6 + 8,
-    1 + 8,
-    5 + 8,
-    6 + 8,
-    0 + 8,
-    2 + 8,
-    4 + 8,
-    3 + 8,
-    2 + 8,
-    7 + 8,
-    4 + 8,
-    0 + 8,
-    4 + 8,
-    5 + 8,
-    0 + 8,
-    3 + 8,
-    4 + 8,
-    2 + 8,
-    1 + 8,
-    6 + 8,
-    2 + 8,
-    6 + 8,
-    7 + 8,
-
-    0 + 16,
-    1 + 16,
-    3 + 16,
-    1 + 16,
-    2 + 16,
-    3 + 16,
-    6 + 16,
-    5 + 16,
-    7 + 16,
-    4 + 16,
-    7 + 16,
-    5 + 16,
-    0 + 16,
-    6 + 16,
-    1 + 16,
-    5 + 16,
-    6 + 16,
-    0 + 16,
-    2 + 16,
-    4 + 16,
-    3 + 16,
-    2 + 16,
-    7 + 16,
-    4 + 16,
-    0 + 16,
-    4 + 16,
-    5 + 16,
-    0 + 16,
-    3 + 16,
-    4 + 16,
-    2 + 16,
-    1 + 16,
-    6 + 16,
-    2 + 16,
-    6 + 16,
-    7 + 16,
-
-    0 + 24,
-    1 + 24,
-    3 + 24,
-    1 + 24,
-    2 + 24,
-    3 + 24,
-    6 + 24,
-    5 + 24,
-    7 + 24,
-    4 + 24,
-    7 + 24,
-    5 + 24,
-    0 + 24,
-    6 + 24,
-    1 + 24,
-    5 + 24,
-    6 + 24,
-    0 + 24,
-    2 + 24,
-    4 + 24,
-    3 + 24,
-    2 + 24,
-    7 + 24,
-    4 + 24,
-    0 + 24,
-    4 + 24,
-    5 + 24,
-    0 + 24,
-    3 + 24,
-    4 + 24,
-    2 + 24,
-    1 + 24,
-    6 + 24,
-    2 + 24,
-    6 + 24,
-    7 + 24,
-
-    0 + 32,
-    1 + 32,
-    3 + 32,
-    1 + 32,
-    2 + 32,
-    3 + 32,
-    6 + 32,
-    5 + 32,
-    7 + 32,
-    4 + 32,
-    7 + 32,
-    5 + 32,
-    0 + 32,
-    6 + 32,
-    1 + 32,
-    5 + 32,
-    6 + 32,
-    0 + 32,
-    2 + 32,
-    4 + 32,
-    3 + 32,
-    2 + 32,
-    7 + 32,
-    4 + 32,
-    0 + 32,
-    4 + 32,
-    5 + 32,
-    0 + 32,
-    3 + 32,
-    4 + 32,
-    2 + 32,
-    1 + 32,
-    6 + 32,
-    2 + 32,
-    6 + 32,
-    7 + 32,
+    7, // Back face
+    8,
+    9,
+    10,
+    8,
+    10,
+    11, // Top face
+    12,
+    13,
+    14,
+    12,
+    14,
+    15, // Bottom face
+    16,
+    17,
+    18,
+    16,
+    18,
+    19, // Right face
+    20,
+    21,
+    22,
+    20,
+    22,
+    23, // Left face
   ];
 
+  var myImage = document.getElementById("deskPicture");
+  textureImage = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, textureImage);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, myImage);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
   var iBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuffer);
   gl.bufferData(
@@ -437,14 +404,13 @@ function drawTable() {
     new Uint8Array(indexList),
     gl.STATIC_DRAW
   );
-
   var vertexBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, flatten(vertices), gl.STATIC_DRAW);
 
-  var myPosition = gl.getAttribLocation(myShaderProgram, "myPosition");
-  gl.vertexAttribPointer(myPosition, 4, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(myPosition);
+  var vertexPosition = gl.getAttribLocation(myShaderProgram, "vertexPosition");
+  gl.vertexAttribPointer(vertexPosition, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(vertexPosition);
 
   var textureBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
@@ -457,352 +423,526 @@ function drawTable() {
   gl.vertexAttribPointer(texturePosition, 2, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(texturePosition);
 
+  gl.drawElements(gl.TRIANGLES, indexList.length, gl.UNSIGNED_BYTE, 0);
+}
+
+function drawTableLeg() {
+  // Vertices for the table legs
+  var vertices = [
+    // Front right leg
+    1.4,
+    -1.0,
+    1.4, // Vertex 0
+    1.5,
+    -1.0,
+    1.4, // Vertex 1
+    1.5,
+    0.0,
+    1.4, // Vertex 2
+    1.4,
+    0.0,
+    1.4, // Vertex 3
+
+    // Front left leg
+    -1.5,
+    -1.0,
+    1.4, // Vertex 4
+    -1.4,
+    -1.0,
+    1.4, // Vertex 5
+    -1.4,
+    0.0,
+    1.4, // Vertex 6
+    -1.5,
+    0.0,
+    1.4, // Vertex 7
+
+    // Back left leg
+    -1.5,
+    -1.0,
+    -1.4, // Vertex 8
+    -1.4,
+    -1.0,
+    -1.4, // Vertex 9
+    -1.4,
+    0.0,
+    -1.4, // Vertex 10
+    -1.5,
+    0.0,
+    -1.4, // Vertex 11
+
+    // Back right leg
+    1.4,
+    -1.0,
+    -1.4, // Vertex 12
+    1.5,
+    -1.0,
+    -1.4, // Vertex 13
+    1.5,
+    0.0,
+    -1.4, // Vertex 14
+    1.4,
+    0.0,
+    -1.4, // Vertex 15
+  ];
+
+  // Texture coordinates for the table legs
+  var textureCoordinates = [
+    // Front right leg
+    0.0,
+    0.0, // Vertex 0
+    1.0,
+    0.0, // Vertex 1
+    1.0,
+    1.0, // Vertex 2
+    0.0,
+    1.0, // Vertex 3
+
+    // Front left leg
+    0.0,
+    0.0, // Vertex 4
+    1.0,
+    0.0, // Vertex 5
+    1.0,
+    1.0, // Vertex 6
+    0.0,
+    1.0, // Vertex 7
+
+    // Back left leg
+    0.0,
+    0.0, // Vertex 8
+    1.0,
+    0.0, // Vertex 9
+    1.0,
+    1.0, // Vertex 10
+    0.0,
+    1.0, // Vertex 11
+
+    // Back right leg
+    0.0,
+    0.0, // Vertex 12
+    1.0,
+    0.0, // Vertex 13
+    1.0,
+    1.0, // Vertex 14
+    0.0,
+    1.0, // Vertex 15
+  ];
+
+  // Index list for rendering the table legs
+  var indexList = [
+    // Front right leg
+    0, 1, 2, 0, 2, 3,
+    // Front left leg
+    4, 5, 6, 4, 6, 7,
+    // Back left leg
+    8, 9, 10, 8, 10, 11,
+    // Back right leg
+    12, 13, 14, 12, 14, 15,
+  ];
+
+  var myImage = document.getElementById("deskPicture");
   textureImage = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, textureImage);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, deskImage);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, myImage);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  var iBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuffer);
+  gl.bufferData(
+    gl.ELEMENT_ARRAY_BUFFER,
+    new Uint8Array(indexList),
+    gl.STATIC_DRAW
+  );
+  var vertexBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(vertices), gl.STATIC_DRAW);
+
+  var vertexPosition = gl.getAttribLocation(myShaderProgram, "vertexPosition");
+  gl.vertexAttribPointer(vertexPosition, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(vertexPosition);
+
+  var textureBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(textureCoordinates), gl.STATIC_DRAW);
+
+  var texturePosition = gl.getAttribLocation(
+    myShaderProgram,
+    "textureCoordinate"
+  );
+  gl.vertexAttribPointer(texturePosition, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(texturePosition);
+
+  gl.drawElements(gl.TRIANGLES, indexList.length, gl.UNSIGNED_BYTE, 0);
+}
+
+function drawBox() {
+  // Vertices for the gift box
+  var vertices = [
+    // Front face
+    -0.5,
+    -0.5,
+    0.5, // Vertex 0
+    0.5,
+    -0.5,
+    0.5, // Vertex 1
+    0.5,
+    0.5,
+    0.5, // Vertex 2
+    -0.5,
+    0.5,
+    0.5, // Vertex 3
+
+    // Back face
+    -0.5,
+    -0.5,
+    -0.5, // Vertex 4
+    0.5,
+    -0.5,
+    -0.5, // Vertex 5
+    0.5,
+    0.5,
+    -0.5, // Vertex 6
+    -0.5,
+    0.5,
+    -0.5, // Vertex 7
+
+    // Top face
+    -0.5,
+    0.5,
+    0.5, // Vertex 3 (Repeated for continuity)
+    0.5,
+    0.5,
+    0.5, // Vertex 2 (Repeated for continuity)
+    0.5,
+    0.5,
+    -0.5, // Vertex 6 (Repeated for continuity)
+    -0.5,
+    0.5,
+    -0.5, // Vertex 7 (Repeated for continuity)
+
+    // Bottom face
+    -0.5,
+    -0.5,
+    0.5, // Vertex 0 (Repeated for continuity)
+    0.5,
+    -0.5,
+    0.5, // Vertex 1 (Repeated for continuity)
+    0.5,
+    -0.5,
+    -0.5, // Vertex 5 (Repeated for continuity)
+    -0.5,
+    -0.5,
+    -0.5, // Vertex 4 (Repeated for continuity)
+
+    // Right face
+    0.5,
+    -0.5,
+    0.5, // Vertex 1 (Repeated for continuity)
+    0.5,
+    -0.5,
+    -0.5, // Vertex 5 (Repeated for continuity)
+    0.5,
+    0.5,
+    -0.5, // Vertex 6 (Repeated for continuity)
+    0.5,
+    0.5,
+    0.5, // Vertex 2 (Repeated for continuity)
+
+    // Left face
+    -0.5,
+    -0.5,
+    0.5, // Vertex 0 (Repeated for continuity)
+    -0.5,
+    -0.5,
+    -0.5, // Vertex 4 (Repeated for continuity)
+    -0.5,
+    0.5,
+    -0.5, // Vertex 7 (Repeated for continuity)
+    -0.5,
+    0.5,
+    0.5, // Vertex 3 (Repeated for continuity)
+  ];
+
+  // Texture coordinates for the gift box
+  var textureCoordinates = [
+    // Front
+    0.0,
+    0.0, // Vertex 0
+    1.0,
+    0.0, // Vertex 1
+    1.0,
+    1.0, // Vertex 2
+    0.0,
+    1.0, // Vertex 3
+
+    // Back
+    1.0,
+    0.0, // Vertex 5 (Flipped)
+    0.0,
+    0.0, // Vertex 4 (Flipped)
+    0.0,
+    1.0, // Vertex 7 (Flipped)
+    1.0,
+    1.0, // Vertex 6 (Flipped)
+
+    // Top
+    0.0,
+    1.0, // Vertex 3 (Repeated for continuity)
+    1.0,
+    1.0, // Vertex 2 (Repeated for continuity)
+    1.0,
+    0.0, // Vertex 6 (Repeated for continuity)
+    0.0,
+    0.0, // Vertex 7 (Repeated for continuity)
+
+    // Bottom
+    0.0,
+    0.0, // Vertex 0 (Repeated for continuity)
+    1.0,
+    0.0, // Vertex 1 (Repeated for continuity)
+    1.0,
+    1.0, // Vertex 5 (Repeated for continuity)
+    0.0,
+    1.0, // Vertex 4 (Repeated for continuity)
+
+    // Right
+    1.0,
+    0.0, // Vertex 1 (Repeated for continuity)
+    0.0,
+    0.0, // Vertex 5 (Repeated for continuity)
+    0.0,
+    1.0, // Vertex 6 (Repeated for continuity)
+    1.0,
+    1.0, // Vertex 2 (Repeated for continuity)
+
+    // Left
+    0.0,
+    0.0, // Vertex 0 (Repeated for continuity)
+    1.0,
+    0.0, // Vertex 4 (Repeated for continuity)
+    1.0,
+    1.0, // Vertex 7 (Repeated for continuity)
+    0.0,
+    1.0, // Vertex 3 (Repeated for continuity)
+  ];
+
+  // Index list for rendering the gift box
+  var indexList = [
+    0,
+    1,
+    2,
+    0,
+    2,
+    3, // Front face
+    4,
+    5,
+    6,
+    4,
+    6,
+    7, // Back face
+    8,
+    9,
+    10,
+    8,
+    10,
+    11, // Top face
+    12,
+    13,
+    14,
+    12,
+    14,
+    15, // Bottom face
+    16,
+    17,
+    18,
+    16,
+    18,
+    19, // Right face
+    20,
+    21,
+    22,
+    20,
+    22,
+    23, // Left face
+  ];
+
+  var myImage = document.getElementById("giftPicture");
+  textureImage = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, textureImage);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, myImage);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 
-  gl.drawElements(gl.TRIANGLES, 180, gl.UNSIGNED_BYTE, 0);
+  var iBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuffer);
+  gl.bufferData(
+    gl.ELEMENT_ARRAY_BUFFER,
+    new Uint8Array(indexList),
+    gl.STATIC_DRAW
+  );
+  var vertexBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(vertices), gl.STATIC_DRAW);
+
+  var vertexPosition = gl.getAttribLocation(myShaderProgram, "vertexPosition");
+  gl.vertexAttribPointer(vertexPosition, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(vertexPosition);
+
+  var textureBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(textureCoordinates), gl.STATIC_DRAW);
+
+  var texturePosition = gl.getAttribLocation(
+    myShaderProgram,
+    "textureCoordinate"
+  );
+  gl.vertexAttribPointer(texturePosition, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(texturePosition);
+
+  gl.drawElements(gl.TRIANGLES, indexList.length, gl.UNSIGNED_BYTE, 0);
 }
 
 function drawChair() {
+  // Vertices for the chair
   var vertices = [
-    vec4(-0.1 + transX, 0.01, -0.1 - 0.5), //BOTTOM
-    vec4(-0.1 + transX, -0.01, -0.1 - 0.5),
-    vec4(0.1 + transX, -0.01, -0.1 - 0.5),
-    vec4(0.1 + transX, 0.01, -0.1 - 0.5),
-    vec4(0.1 + transX, 0.01, 0.1 - 0.5),
-    vec4(-0.1 + transX, 0.01, 0.1 - 0.5),
-    vec4(-0.1 + transX, -0.01, 0.1 - 0.5),
-    vec4(0.1 + transX, -0.01, 0.1 - 0.5),
+    // Seat
+    -0.4,
+    0.0,
+    0.4, // Vertex 0
+    0.4,
+    0.0,
+    0.4, // Vertex 1
+    0.4,
+    0.1,
+    0.4, // Vertex 2
+    -0.4,
+    0.1,
+    0.4, // Vertex 3
 
-    vec4(-0.01 - 0.09 + transX, 0.1 + 0.09, -0.1 - 0.5), //BACK
-    vec4(-0.01 - 0.09 + transX, -0.1 + 0.09, -0.1 - 0.5),
-    vec4(0.01 - 0.09 + transX, -0.1 + 0.09, -0.1 - 0.5),
-    vec4(0.01 - 0.09 + transX, 0.1 + 0.09, -0.1 - 0.5),
-    vec4(0.01 - 0.09 + transX, 0.1 + 0.09, 0.1 - 0.5),
-    vec4(-0.01 - 0.09 + transX, 0.1 + 0.09, 0.1 - 0.5),
-    vec4(-0.01 - 0.09 + transX, -0.1 + 0.09, 0.1 - 0.5),
-    vec4(0.01 - 0.09 + transX, -0.1 + 0.09, 0.1 - 0.5),
+    // Backrest
+    -0.4,
+    0.0,
+    -0.1, // Vertex 4
+    0.4,
+    0.0,
+    -0.1, // Vertex 5
+    0.4,
+    0.1,
+    -0.1, // Vertex 6
+    -0.4,
+    0.1,
+    -0.1, // Vertex 7
 
-    vec4(-0.01 + 0.09 + transX, 0.1 - 0.1, -0.01 - 0.59), //LEG1
-    vec4(-0.01 + 0.09 + transX, -0.1 - 0.1, -0.01 - 0.59),
-    vec4(0.01 + 0.09 + transX, -0.1 - 0.1, -0.01 - 0.59),
-    vec4(0.01 + 0.09 + transX, 0.1 - 0.1, -0.01 - 0.59),
-    vec4(0.01 + 0.09 + transX, 0.1 - 0.1, 0.01 - 0.59),
-    vec4(-0.01 + 0.09 + transX, 0.1 - 0.1, 0.01 - 0.59),
-    vec4(-0.01 + 0.09 + transX, -0.1 - 0.1, 0.01 - 0.59),
-    vec4(0.01 + 0.09 + transX, -0.1 - 0.1, 0.01 - 0.59),
+    // Front legs
+    -0.3,
+    -0.3,
+    0.3, // Vertex 8
+    0.3,
+    -0.3,
+    0.3, // Vertex 9
+    0.3,
+    0.0,
+    0.3, // Vertex 10
+    -0.3,
+    0.0,
+    0.3, // Vertex 11
 
-    vec4(-0.01 - 0.09 + transX, 0.1 - 0.1, -0.01 - 0.59), //LEG2
-    vec4(-0.01 - 0.09 + transX, -0.1 - 0.1, -0.01 - 0.59),
-    vec4(0.01 - 0.09 + transX, -0.1 - 0.1, -0.01 - 0.59),
-    vec4(0.01 - 0.09 + transX, 0.1 - 0.1, -0.01 - 0.59),
-    vec4(0.01 - 0.09 + transX, 0.1 - 0.1, 0.01 - 0.59),
-    vec4(-0.01 - 0.09 + transX, 0.1 - 0.1, 0.01 - 0.59),
-    vec4(-0.01 - 0.09 + transX, -0.1 - 0.1, 0.01 - 0.59),
-    vec4(0.01 - 0.09 + transX, -0.1 - 0.1, 0.01 - 0.59),
-
-    vec4(-0.01 + 0.09 + transX, 0.1 - 0.1, -0.01 - 0.41), //LEG3
-    vec4(-0.01 + 0.09 + transX, -0.1 - 0.1, -0.01 - 0.41),
-    vec4(0.01 + 0.09 + transX, -0.1 - 0.1, -0.01 - 0.41),
-    vec4(0.01 + 0.09 + transX, 0.1 - 0.1, -0.01 - 0.41),
-    vec4(0.01 + 0.09 + transX, 0.1 - 0.1, 0.01 - 0.41),
-    vec4(-0.01 + 0.09 + transX, 0.1 - 0.1, 0.01 - 0.41),
-    vec4(-0.01 + 0.09 + transX, -0.1 - 0.1, 0.01 - 0.41),
-    vec4(0.01 + 0.09 + transX, -0.1 - 0.1, 0.01 - 0.41),
-
-    vec4(-0.01 - 0.09 + transX, 0.1 - 0.1, -0.01 - 0.41), //LEG4
-    vec4(-0.01 - 0.09 + transX, -0.1 - 0.1, -0.01 - 0.41),
-    vec4(0.01 - 0.09 + transX, -0.1 - 0.1, -0.01 - 0.41),
-    vec4(0.01 - 0.09 + transX, 0.1 - 0.1, -0.01 - 0.41),
-    vec4(0.01 - 0.09 + transX, 0.1 - 0.1, 0.01 - 0.41),
-    vec4(-0.01 - 0.09 + transX, 0.1 - 0.1, 0.01 - 0.41),
-    vec4(-0.01 - 0.09 + transX, -0.1 - 0.1, 0.01 - 0.41),
-    vec4(0.01 - 0.09 + transX, -0.1 - 0.1, 0.01 - 0.41),
+    // Back legs
+    -0.3,
+    -0.3,
+    -0.0, // Vertex 12
+    0.3,
+    -0.3,
+    -0.0, // Vertex 13
+    0.3,
+    0.0,
+    -0.0, // Vertex 14
+    -0.3,
+    0.0,
+    -0.0, // Vertex 15
   ];
 
+  // Texture coordinates for the chair
   var textureCoordinates = [
-    vec2(0.0, 0.0), //bottom
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
-    vec2(0.0, 0.0),
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
+    // Seat
+    0.0,
+    0.0, // Vertex 0
+    1.0,
+    0.0, // Vertex 1
+    1.0,
+    1.0, // Vertex 2
+    0.0,
+    1.0, // Vertex 3
 
-    vec2(0.0, 0.0), //back
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
-    vec2(0.0, 0.0),
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
+    // Backrest
+    0.0,
+    0.0, // Vertex 4
+    1.0,
+    0.0, // Vertex 5
+    1.0,
+    1.0, // Vertex 6
+    0.0,
+    1.0, // Vertex 7
 
-    vec2(0.0, 0.0), //leg1
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
-    vec2(0.0, 0.0),
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
+    // Front legs
+    0.0,
+    0.0, // Vertex 8
+    1.0,
+    0.0, // Vertex 9
+    1.0,
+    1.0, // Vertex 10
+    0.0,
+    1.0, // Vertex 11
 
-    vec2(0.0, 0.0), //leg2
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
-    vec2(0.0, 0.0),
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
-
-    vec2(0.0, 0.0), //leg3
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
-    vec2(0.0, 0.0),
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
-
-    vec2(0.0, 0.0), //leg4
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
-    vec2(0.0, 0.0),
-    vec2(0.0, 1.0),
-    vec2(1.0, 0.0),
-    vec2(1.0, 1.0),
+    // Back legs
+    0.0,
+    0.0, // Vertex 12
+    1.0,
+    0.0, // Vertex 13
+    1.0,
+    1.0, // Vertex 14
+    0.0,
+    1.0, // Vertex 15
   ];
 
+  // Index list for rendering the chair
   var indexList = [
     0,
     1,
-    3,
-    1,
     2,
-    3,
-    6,
-    5,
-    7,
-    4,
-    7,
-    5,
-    0,
-    6,
-    1,
-    5,
-    6,
     0,
     2,
-    4,
-    3,
-    2,
-    7,
-    4,
-    0,
+    3, // Seat
     4,
     5,
-    0,
-    3,
+    6,
     4,
-    2,
-    1,
     6,
-    2,
-    6,
-    7,
-
-    0 + 8,
-    1 + 8,
-    3 + 8,
-    1 + 8,
-    2 + 8,
-    3 + 8,
-    6 + 8,
-    5 + 8,
-    7 + 8,
-    4 + 8,
-    7 + 8,
-    5 + 8,
-    0 + 8,
-    6 + 8,
-    1 + 8,
-    5 + 8,
-    6 + 8,
-    0 + 8,
-    2 + 8,
-    4 + 8,
-    3 + 8,
-    2 + 8,
-    7 + 8,
-    4 + 8,
-    0 + 8,
-    4 + 8,
-    5 + 8,
-    0 + 8,
-    3 + 8,
-    4 + 8,
-    2 + 8,
-    1 + 8,
-    6 + 8,
-    2 + 8,
-    6 + 8,
-    7 + 8,
-
-    0 + 16,
-    1 + 16,
-    3 + 16,
-    1 + 16,
-    2 + 16,
-    3 + 16,
-    6 + 16,
-    5 + 16,
-    7 + 16,
-    4 + 16,
-    7 + 16,
-    5 + 16,
-    0 + 16,
-    6 + 16,
-    1 + 16,
-    5 + 16,
-    6 + 16,
-    0 + 16,
-    2 + 16,
-    4 + 16,
-    3 + 16,
-    2 + 16,
-    7 + 16,
-    4 + 16,
-    0 + 16,
-    4 + 16,
-    5 + 16,
-    0 + 16,
-    3 + 16,
-    4 + 16,
-    2 + 16,
-    1 + 16,
-    6 + 16,
-    2 + 16,
-    6 + 16,
-    7 + 16,
-
-    0 + 24,
-    1 + 24,
-    3 + 24,
-    1 + 24,
-    2 + 24,
-    3 + 24,
-    6 + 24,
-    5 + 24,
-    7 + 24,
-    4 + 24,
-    7 + 24,
-    5 + 24,
-    0 + 24,
-    6 + 24,
-    1 + 24,
-    5 + 24,
-    6 + 24,
-    0 + 24,
-    2 + 24,
-    4 + 24,
-    3 + 24,
-    2 + 24,
-    7 + 24,
-    4 + 24,
-    0 + 24,
-    4 + 24,
-    5 + 24,
-    0 + 24,
-    3 + 24,
-    4 + 24,
-    2 + 24,
-    1 + 24,
-    6 + 24,
-    2 + 24,
-    6 + 24,
-    7 + 24,
-
-    0 + 32,
-    1 + 32,
-    3 + 32,
-    1 + 32,
-    2 + 32,
-    3 + 32,
-    6 + 32,
-    5 + 32,
-    7 + 32,
-    4 + 32,
-    7 + 32,
-    5 + 32,
-    0 + 32,
-    6 + 32,
-    1 + 32,
-    5 + 32,
-    6 + 32,
-    0 + 32,
-    2 + 32,
-    4 + 32,
-    3 + 32,
-    2 + 32,
-    7 + 32,
-    4 + 32,
-    0 + 32,
-    4 + 32,
-    5 + 32,
-    0 + 32,
-    3 + 32,
-    4 + 32,
-    2 + 32,
-    1 + 32,
-    6 + 32,
-    2 + 32,
-    6 + 32,
-    7 + 32,
-
-    0 + 40,
-    1 + 40,
-    3 + 40,
-    1 + 40,
-    2 + 40,
-    3 + 40,
-    6 + 40,
-    5 + 40,
-    7 + 40,
-    4 + 40,
-    7 + 40,
-    5 + 40,
-    0 + 40,
-    6 + 40,
-    1 + 40,
-    5 + 40,
-    6 + 40,
-    0 + 40,
-    2 + 40,
-    4 + 40,
-    3 + 40,
-    2 + 40,
-    7 + 40,
-    4 + 40,
-    0 + 40,
-    4 + 40,
-    5 + 40,
-    0 + 40,
-    3 + 40,
-    4 + 40,
-    2 + 40,
-    1 + 40,
-    6 + 40,
-    2 + 40,
-    6 + 40,
-    7 + 40,
+    7, // Backrest
+    8,
+    9,
+    10,
+    8,
+    10,
+    11, // Front legs
+    12,
+    13,
+    14,
+    12,
+    14,
+    15, // Back legs
   ];
+
+  var myImage = document.getElementById("deskPicture");
+  textureImage = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, textureImage);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, myImage);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 
   var iBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuffer);
@@ -811,14 +951,13 @@ function drawChair() {
     new Uint8Array(indexList),
     gl.STATIC_DRAW
   );
-
   var vertexBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, flatten(vertices), gl.STATIC_DRAW);
 
-  var myPosition = gl.getAttribLocation(myShaderProgram, "myPosition");
-  gl.vertexAttribPointer(myPosition, 4, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(myPosition);
+  var vertexPosition = gl.getAttribLocation(myShaderProgram, "vertexPosition");
+  gl.vertexAttribPointer(vertexPosition, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(vertexPosition);
 
   var textureBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
@@ -831,14 +970,7 @@ function drawChair() {
   gl.vertexAttribPointer(texturePosition, 2, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(texturePosition);
 
-  textureImage = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, textureImage);
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, chairImage);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-
-  gl.drawElements(gl.TRIANGLES, 216, gl.UNSIGNED_BYTE, 0);
+  gl.drawElements(gl.TRIANGLES, indexList.length, gl.UNSIGNED_BYTE, 0);
 }
 
 // Add event listeners to detect keypresses

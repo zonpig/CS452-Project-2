@@ -1,4 +1,4 @@
-# Lab 5: Texture Mapping
+# Project 2:
 
 Done by:
 

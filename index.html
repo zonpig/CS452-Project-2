@@ -1,12 +1,37 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+      }
+    </style>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
     <title>Project 2</title>
 
     <script id="vertex-shader" type="x-shader/x-vertex">
       attribute vec4 vertexPosition;
       attribute vec4 vertexColor;
+      attribute vec3 nv;
+
+      // Modelview, modelview inverse transpose, and projections
+      uniform mat4 M, Minvt, P_persp;
+
+      // 1st Light Source: Point Light Source
+      uniform vec3 p0; // position
+      uniform vec3 Ia, Id, Is; // Incident (Ambient, Diffuse, Specular)
+      varying vec3 Iapp0, Idpp0, Ispp0;
+      varying vec3 i, v, n; // Incident ray, Viewing ray, Normal
+
+      // 2nd Light Source: Directional Light Source
+      uniform vec3 direction; // direction
+      uniform vec3 Ia2, Id2, Is2; // Incident Intensity (Ambient, Diffuse, Specular)
+      varying vec3 i2, v2, n2; // Incident ray, Viewing ray, Normal
 
       attribute vec2 textureCoordinate;
       varying vec2 fTextureCoordinate;
@@ -16,62 +41,170 @@
       uniform float gamma;
 
       uniform float transX, transY;
-      mat4 M_x; mat4 M_y; mat4 M_z;
+      mat4 M_x, M_y, M_z;
       mat4 M_Scale;
       mat4 M_Translate;
 
       void main() {
-        M_x = mat4
-        (
-            1, 0, 0, 0,
-            0, cos(alpha), -sin(alpha), 0,
-            0, sin(alpha), cos(alpha), 0,
-            0, 0, 0, 1
-        );
+          M_x = mat4(
+              1, 0, 0, 0,
+              0, cos(alpha), -sin(alpha), 0,
+              0, sin(alpha), cos(alpha), 0,
+              0, 0, 0, 1
+          );
 
-        M_y = mat4
-        (
-            cos(beta), 0, -sin(beta), 0,
-            0, 1, 0, 0,
-            sin(beta), 0, cos(beta), 0,
-            0, 0, 0, 1
-        );
+          M_y = mat4(
+              cos(beta), 0, -sin(beta), 0,
+              0, 1, 0, 0,
+              sin(beta), 0, cos(beta), 0,
+              0, 0, 0, 1
+          );
 
-        M_z = mat4
-        (
-            cos(gamma), -sin(gamma), 0, 0,
-            sin(gamma), cos(gamma), 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-        );
+          M_z = mat4(
+              cos(gamma), -sin(gamma), 0, 0,
+              sin(gamma), cos(gamma), 0, 0,
+              0, 0, 1, 0,
+              0, 0, 0, 1
+          );
 
-        M_Translate = mat4
-        (
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            transX, transY, 0, 1
-        );
+          M_Translate = mat4(
+              1, 0, 0, 0,
+              0, 1, 0, 0,
+              0, 0, 1, 0,
+              transX, transY, 0, 1
+          );
 
+          // Transform the vertex by modelview matrix
+          vec4 vpTransf4 = M * vec4(vertexPosition.xyz, 1.0);
+          vec3 vpTransf = vpTransf4.xyz;
 
+          // Transform the normal by inverse transpose of modelview matrix
+          vec4 nvTransf4 = Minvt * vec4(nv, 1.0);
+          vec3 nvTransf = nvTransf4.xyz;
 
-        gl_Position = M_Translate* M_z * M_y * M_x * vertexPosition;
-        fTextureCoordinate = textureCoordinate;
+          // 1st Light Source (Point Light) - compute the amount of light
+          float a = 0.0;
+          float b = 0.0;
+          float c = 0.0002;
+
+          float distance = length(vpTransf - p0);
+          float scalefactor = a + b * distance + c * distance * distance;
+
+          Iapp0 = Ia / scalefactor;
+          Idpp0 = Id / scalefactor;
+          Ispp0 = Is / scalefactor;
+
+          i = normalize(p0 - vpTransf);
+          v = normalize(vec3(0.0, 0.0, 0.0) - vpTransf);
+          n = nvTransf; // Vertex normal
+
+          // 2nd Light Source (Directional Light) - compute the amount of light
+          i2 = direction;
+          v2 = normalize(vec3(0.0, 0.0, 0.0) - vpTransf);
+          n2 = nvTransf;
+
+          gl_Position = P_persp * M * vertexPosition;
+          fTextureCoordinate = textureCoordinate;
       }
     </script>
 
     <script id="fragment-shader" type="x-shader/x-fragment">
       precision mediump float;
 
+      // Texture Fragment
       varying vec2 fTextureCoordinate;
       uniform sampler2D texMap0;
 
+      // Lighting Fragment
+      uniform float alpha1;
+      uniform float alpha2;
+
+      uniform vec3 ka, kd, ks;
+      varying vec3 Iapp0, Idpp0, Ispp0;
+      varying vec3 i, v, n;
+
+      uniform vec3 ka2, kd2, ks2;
+      uniform vec3 Ia2, Id2, Is2;
+      varying vec3 i2, v2, n2;
+
       void main() {
-        vec4 color0 = texture2D( texMap0, fTextureCoordinate );
-        gl_FragColor.r = color0.r;
-        gl_FragColor.g = color0.g;
-        gl_FragColor.b = color0.b;
-        gl_FragColor.a = 1.0;
+
+          // normalize the varying variables that should be unit vectors (i, v, n)
+          vec3 v_renorm = normalize(v);
+          vec3 n_renorm = normalize(n);
+          vec3 i_renorm = normalize(i);
+
+          vec3 v_renorm2 = normalize(v2);
+          vec3 n_renorm2 = normalize(n2);
+          vec3 i_renorm2 = normalize(i2);
+
+          ////////// 1st Light Source (Point Light) //////////
+
+          vec3 Ra, Rd, Rs;
+
+          // 1st (Point Light Source) - Ambient Reflection
+          Ra.r = ka.r * Iapp0.r;
+          Ra.g = ka.g * Iapp0.g;
+          Ra.b = ka.b * Iapp0.b;
+
+          // 1st (Point Light Source) - Diffuse Reflection
+          float costheta = dot(i_renorm, n_renorm);
+          Rd.r = kd.r * Idpp0.r * max(costheta, 0.0);
+          Rd.g = kd.r * Idpp0.g * max(costheta, 0.0);
+          Rd.b = kd.r * Idpp0.b * max(costheta, 0.0);
+
+          // 1st (Point Light Source) - Specular Reflection
+          Rs = vec3( 0.0, 0.0, 0.0 );
+          vec3 r = 2.0 * costheta * n_renorm - i_renorm;
+          float rdotv = dot(r, v_renorm);
+          float shine = max(pow(rdotv, alpha1), 0.0);
+
+          if ( costheta > 0.0 ) {
+              Rs.r = ks.r * Ispp0.r * shine;
+              Rs.g = ks.g * Ispp0.g * shine;
+              Rs.b = ks.b * Ispp0.b * shine;
+          }
+
+          ////////// 2nd Light Source (Directional Light) //////////
+
+          vec3 Ra2, Rd2, Rs2;
+
+          // 2nd (Directional Light) - Ambient Reflection
+          Ra2.r = ka2.r * Ia2.r;
+          Ra2.g = ka2.g * Ia2.g;
+          Ra2.b = ka2.b * Ia2.b;
+
+          // 2nd (Directional Light) - Diffuse Reflection
+          float costheta2 = dot(i_renorm2, n_renorm2);
+          Rd2.r = kd2.r * Id2.r * max(costheta2, 0.0);
+          Rd2.g = kd2.r * Id2.g * max(costheta2, 0.0);
+          Rd2.b = kd2.r * Id2.b * max(costheta2, 0.0);
+
+          // 2nd (Directional Light) - Specular Reflection
+          Rs2 = vec3( 0.0, 0.0, 0.0 );
+          vec3 r2 = 2.0 * costheta2 * n_renorm2 - i_renorm2;
+          float rdotv2 = dot(r2, v_renorm2);
+          float shine2 = max(pow(rdotv2, alpha2), 0.0);
+
+          if ( costheta2 > 0.0 ) {
+              Rs2.r = ks2.r * Is2.r * shine2;
+              Rs2.g = ks2.g * Is2.g * shine2;
+              Rs2.b = ks2.b * Is2.b * shine2;
+          }
+
+          // Total Reflected Light
+
+          vec3 R;
+
+          R = clamp(Ra + Rd + Rs + Ra2 + Rd2 + Rs2, 0.0, 1.0);
+
+          // Sample the texture color
+          vec4 textureColor = texture2D(texMap0, fTextureCoordinate);
+
+          gl_FragColor.r = textureColor.r * R.r;
+          gl_FragColor.g = textureColor.g * R.g;
+          gl_FragColor.b = textureColor.b * R.b;
+          gl_FragColor.a = 1.0;
       }
     </script>
 
@@ -88,8 +221,9 @@
     <img id="chairPicture" hidden src="chair.png" />
     <img id="deskPicture" hidden src="desk.jpg" />
     <img id="laptopPicture" hidden src="laptop.jpg" />
+    <img id="giftPicture" hidden src="gift.jpg" />
     <br />
-    <p>Key Bindings</p>
+    <p>Key Bindings to move chair</p>
     <ul>
       <li>'z': Rotate Around X</li>
       <li>'x': Rotate Around Y</li>
