@@ -46,34 +46,6 @@
       mat4 M_Translate;
 
       void main() {
-          M_x = mat4(
-              1, 0, 0, 0,
-              0, cos(alpha), -sin(alpha), 0,
-              0, sin(alpha), cos(alpha), 0,
-              0, 0, 0, 1
-          );
-
-          M_y = mat4(
-              cos(beta), 0, -sin(beta), 0,
-              0, 1, 0, 0,
-              sin(beta), 0, cos(beta), 0,
-              0, 0, 0, 1
-          );
-
-          M_z = mat4(
-              cos(gamma), -sin(gamma), 0, 0,
-              sin(gamma), cos(gamma), 0, 0,
-              0, 0, 1, 0,
-              0, 0, 0, 1
-          );
-
-          M_Translate = mat4(
-              1, 0, 0, 0,
-              0, 1, 0, 0,
-              0, 0, 1, 0,
-              transX, transY, 0, 1
-          );
-
           // Transform the vertex by modelview matrix
           vec4 vpTransf4 = M * vec4(vertexPosition.xyz, 1.0);
           vec3 vpTransf = vpTransf4.xyz;
@@ -219,7 +191,7 @@
     <canvas id="gl-canvas" width="512" height="512"></canvas>
     <img id="textureImage" hidden src="texture.jpg" />
     <img id="chairPicture" hidden src="chair.png" />
-    <img id="deskPicture" hidden src="desk.jpg" />
+    <img id="tablePicture" hidden src="table.jpg" />
     <img id="laptopPicture" hidden src="laptop.jpg" />
     <img id="giftPicture" hidden src="gift.jpg" />
     <br />

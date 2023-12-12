@@ -1,7 +1,5 @@
 var gl;
 var myShaderProgram;
-var alpha, beta, gamma; // Rotation angles around x, y and z axes
-var transX, transY; // Translation factors along x and y axes
 var textureImage;
 
 function init() {
@@ -13,7 +11,7 @@ function init() {
   }
   gl.enable(gl.DEPTH_TEST);
   gl.viewport(0, 0, 512, 512);
-  gl.clearColor(0.843, 0.851, 0.69, 1.0);
+  gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
   myShaderProgram = initShaders(gl, "vertex-shader", "fragment-shader");
   gl.useProgram(myShaderProgram);
@@ -203,7 +201,7 @@ function render() {
 
 function drawTableTop() {
   // Vertices for the table top
-  var vertices = [
+  var tableTopVertices = [
     // Front face
     -1.5,
     0.1,
@@ -290,7 +288,7 @@ function drawTableTop() {
   ];
 
   // Texture coordinates for the table top
-  var textureCoordinates = [
+  var tableTopTextureCoordinates = [
     // Front
     0.0,
     0.0, // Vertex 0
@@ -353,7 +351,7 @@ function drawTableTop() {
   ];
 
   // Index list for rendering the table top
-  var indexList = [
+  var tableTopIndexList = [
     0,
     1,
     2,
@@ -392,7 +390,7 @@ function drawTableTop() {
     23, // Left face
   ];
 
-  var myImage = document.getElementById("deskPicture");
+  var myImage = document.getElementById("tablePicture");
   textureImage = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, textureImage);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -403,12 +401,12 @@ function drawTableTop() {
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuffer);
   gl.bufferData(
     gl.ELEMENT_ARRAY_BUFFER,
-    new Uint8Array(indexList),
+    new Uint8Array(tableTopIndexList),
     gl.STATIC_DRAW
   );
   var vertexBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, flatten(vertices), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(tableTopVertices), gl.STATIC_DRAW);
 
   var vertexPosition = gl.getAttribLocation(myShaderProgram, "vertexPosition");
   gl.vertexAttribPointer(vertexPosition, 3, gl.FLOAT, false, 0, 0);
@@ -416,7 +414,11 @@ function drawTableTop() {
 
   var textureBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, flatten(textureCoordinates), gl.STATIC_DRAW);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    flatten(tableTopTextureCoordinates),
+    gl.STATIC_DRAW
+  );
 
   var texturePosition = gl.getAttribLocation(
     myShaderProgram,
@@ -425,12 +427,12 @@ function drawTableTop() {
   gl.vertexAttribPointer(texturePosition, 2, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(texturePosition);
 
-  gl.drawElements(gl.TRIANGLES, indexList.length, gl.UNSIGNED_BYTE, 0);
+  gl.drawElements(gl.TRIANGLES, tableTopIndexList.length, gl.UNSIGNED_BYTE, 0);
 }
 
 function drawTableLeg() {
   // Vertices for the table leg
-  var vertices = [
+  var tableLegVertices = [
     // Front right leg
     1.4,
     -0.8,
@@ -489,7 +491,7 @@ function drawTableLeg() {
   ];
 
   // Texture coordinates for the table legs
-  var textureCoordinates = [
+  var tableLegTextureCoordinates = [
     // Front right leg
     0.0,
     0.0, // Vertex 0
@@ -532,7 +534,7 @@ function drawTableLeg() {
   ];
 
   // Index list for rendering the table legs
-  var indexList = [
+  var tableLegIndexList = [
     // Front right leg
     0, 1, 2, 0, 2, 3,
     // Front left leg
@@ -543,7 +545,7 @@ function drawTableLeg() {
     12, 13, 14, 12, 14, 15,
   ];
 
-  var myImage = document.getElementById("deskPicture");
+  var myImage = document.getElementById("tablePicture");
   textureImage = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, textureImage);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -554,12 +556,12 @@ function drawTableLeg() {
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuffer);
   gl.bufferData(
     gl.ELEMENT_ARRAY_BUFFER,
-    new Uint8Array(indexList),
+    new Uint8Array(tableLegIndexList),
     gl.STATIC_DRAW
   );
   var vertexBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, flatten(vertices), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(tableLegVertices), gl.STATIC_DRAW);
 
   var vertexPosition = gl.getAttribLocation(myShaderProgram, "vertexPosition");
   gl.vertexAttribPointer(vertexPosition, 3, gl.FLOAT, false, 0, 0);
@@ -567,7 +569,11 @@ function drawTableLeg() {
 
   var textureBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, flatten(textureCoordinates), gl.STATIC_DRAW);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    flatten(tableLegTextureCoordinates),
+    gl.STATIC_DRAW
+  );
 
   var texturePosition = gl.getAttribLocation(
     myShaderProgram,
@@ -576,12 +582,12 @@ function drawTableLeg() {
   gl.vertexAttribPointer(texturePosition, 2, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(texturePosition);
 
-  gl.drawElements(gl.TRIANGLES, indexList.length, gl.UNSIGNED_BYTE, 0);
+  gl.drawElements(gl.TRIANGLES, tableLegIndexList.length, gl.UNSIGNED_BYTE, 0);
 }
 
 function drawBox() {
   // Vertices for the gift box
-  var vertices = [
+  var boxVertices = [
     // Front face
     -0.5,
     0.1,
@@ -668,7 +674,7 @@ function drawBox() {
   ];
 
   // Texture coordinates for the gift box
-  var textureCoordinates = [
+  var boxTextureCoordinates = [
     // Front
     0.0,
     0.0, // Vertex 0
@@ -731,7 +737,7 @@ function drawBox() {
   ];
 
   // Index list for rendering the gift box
-  var indexList = [
+  var boxIndexList = [
     0,
     1,
     2,
@@ -782,12 +788,12 @@ function drawBox() {
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuffer);
   gl.bufferData(
     gl.ELEMENT_ARRAY_BUFFER,
-    new Uint8Array(indexList),
+    new Uint8Array(boxIndexList),
     gl.STATIC_DRAW
   );
   var vertexBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, flatten(vertices), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(boxVertices), gl.STATIC_DRAW);
 
   var vertexPosition = gl.getAttribLocation(myShaderProgram, "vertexPosition");
   gl.vertexAttribPointer(vertexPosition, 3, gl.FLOAT, false, 0, 0);
@@ -795,7 +801,11 @@ function drawBox() {
 
   var textureBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, flatten(textureCoordinates), gl.STATIC_DRAW);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    flatten(boxTextureCoordinates),
+    gl.STATIC_DRAW
+  );
 
   var texturePosition = gl.getAttribLocation(
     myShaderProgram,
@@ -804,7 +814,7 @@ function drawBox() {
   gl.vertexAttribPointer(texturePosition, 2, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(texturePosition);
 
-  gl.drawElements(gl.TRIANGLES, indexList.length, gl.UNSIGNED_BYTE, 0);
+  gl.drawElements(gl.TRIANGLES, boxIndexList.length, gl.UNSIGNED_BYTE, 0);
 }
 
 var moveZ = 0.0;
@@ -1352,66 +1362,4 @@ function moveChairBackward() {
     return alert("You can't move the chair backward anymore!");
   }
   moveZ = moveZ + 0.1;
-}
-
-// Add event listeners to detect keypresses
-document.addEventListener("keydown", function (event) {
-  if (event.key === "z") {
-    rotateAroundX();
-  } else if (event.key === "x") {
-    rotateAroundY();
-  } else if (event.key === "c") {
-    rotateAroundZ();
-  }
-
-  // Translation
-  else if (event.key === "l") {
-    translateUpOnX();
-  } else if (event.key === "j") {
-    translateDownOnX();
-  } else if (event.key === "i") {
-    translateUpOnY();
-  } else if (event.key === "k") {
-    translateDownOnY();
-  }
-});
-
-function rotateAroundX() {
-  alpha = alpha + 0.1;
-  alphaLoc = gl.getUniformLocation(myShaderProgram, "alpha");
-  gl.uniform1f(alphaLoc, alpha);
-}
-function rotateAroundY() {
-  beta = beta + 0.1;
-  betaLoc = gl.getUniformLocation(myShaderProgram, "beta");
-  gl.uniform1f(betaLoc, beta);
-}
-function rotateAroundZ() {
-  gamma = gamma + 0.1;
-  gammaLoc = gl.getUniformLocation(myShaderProgram, "gamma");
-  gl.uniform1f(gammaLoc, gamma);
-}
-
-function translateUpOnX() {
-  transX = transX + 0.1;
-  transXLoc = gl.getUniformLocation(myShaderProgram, "transX");
-  gl.uniform1f(transXLoc, transX);
-}
-
-function translateDownOnX() {
-  transX = transX - 0.1;
-  transXLoc = gl.getUniformLocation(myShaderProgram, "transX");
-  gl.uniform1f(transXLoc, transX);
-}
-
-function translateUpOnY() {
-  transY = transY + 0.1;
-  transYLoc = gl.getUniformLocation(myShaderProgram, "transY");
-  gl.uniform1f(transYLoc, transY);
-}
-
-function translateDownOnY() {
-  transY = transY - 0.1;
-  transYLoc = gl.getUniformLocation(myShaderProgram, "transY");
-  gl.uniform1f(transYLoc, transY);
 }
