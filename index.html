@@ -223,15 +223,13 @@
     <img id="laptopPicture" hidden src="laptop.jpg" />
     <img id="giftPicture" hidden src="gift.jpg" />
     <br />
-    <p>Key Bindings to move chair</p>
-    <ul>
-      <li>'z': Rotate Around X</li>
-      <li>'x': Rotate Around Y</li>
-      <li>'c': Rotate Around Z</li>
-      <li>'j': Translate Left on X</li>
-      <li>'l': Translate Right on X</li>
-      <li>'i': Translate Up on Y</li>
-      <li>'k': Translate Down on Y</li>
-    </ul>
+    <div>
+      <button id="moveXBackButton" onclick="moveChairBackward()">
+        Move Chair Backward
+      </button>
+      <button id="moveXForwardButton" onclick="moveChairForward()">
+        Move Chair Forward
+      </button>
+    </div>
   </body>
 </html>

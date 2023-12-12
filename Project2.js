@@ -160,7 +160,7 @@ function second_light() {
   var direction = [0.0, 10.0, 10.0];
 
   var Ia2 = [0.2, 0.1, 0.2];
-  var Id2 = [0.7, 0.5, 0.7];
+  var Id2 = [1.1, 0.5, 0.7];
   var Is2 = [0.8, 0.8, 0.8];
 
   var ka2 = [0.5, 0.5, 0.5];
@@ -195,7 +195,9 @@ function render() {
   drawBox();
   drawTableTop();
   drawTableLeg();
-  drawChair();
+  drawChairSeat();
+  drawChairBackRest();
+  drawChairLegs();
   requestAnimFrame(render);
 }
 
@@ -205,86 +207,86 @@ function drawTableTop() {
     // Front face
     -1.5,
     0.1,
-    1.5, // Vertex 0
+    1.0, // Vertex 0
     1.5,
     0.1,
-    1.5, // Vertex 1
+    1.0, // Vertex 1
     1.5,
     0.2,
-    1.5, // Vertex 2
+    1.0, // Vertex 2
     -1.5,
     0.2,
-    1.5, // Vertex 3
+    1.0, // Vertex 3
 
     // Back face
     -1.5,
     0.1,
-    -1.5, // Vertex 4
+    -1.0, // Vertex 4
     -1.5,
     0.2,
-    -1.5, // Vertex 5
+    -1.0, // Vertex 5
     1.5,
     0.2,
-    -1.5, // Vertex 6
+    -1.0, // Vertex 6
     1.5,
     0.1,
-    -1.5, // Vertex 7
+    -1.0, // Vertex 7
 
     // Top face
     -1.5,
     0.2,
-    -1.5, // Vertex 3 (Repeated for continuity)
+    -1.0, // Vertex 3 (Repeated for continuity)
     -1.5,
     0.2,
-    1.5, // Vertex 2 (Repeated for continuity)
+    1.0, // Vertex 2 (Repeated for continuity)
     1.5,
     0.2,
-    1.5, // Vertex 6 (Repeated for continuity)
+    1.0, // Vertex 6 (Repeated for continuity)
     1.5,
     0.2,
-    -1.5, // Vertex 7 (Repeated for continuity)
+    -1.0, // Vertex 7 (Repeated for continuity)
 
     // Bottom face
     -1.5,
     0.1,
-    -1.5, // Vertex 4 (Repeated for continuity)
+    -1.0, // Vertex 4 (Repeated for continuity)
     1.5,
     0.1,
-    -1.5, // Vertex 7 (Repeated for continuity)
+    -1.0, // Vertex 7 (Repeated for continuity)
     1.5,
     0.1,
-    1.5, // Vertex 1 (Repeated for continuity)
+    1.0, // Vertex 1 (Repeated for continuity)
     -1.5,
     0.1,
-    1.5, // Vertex 0 (Repeated for continuity)
+    1.0, // Vertex 0 (Repeated for continuity)
 
     // Right face
     1.5,
     0.1,
-    -1.5, // Vertex 7 (Repeated for continuity)
+    -1.0, // Vertex 7 (Repeated for continuity)
     1.5,
     0.2,
-    -1.5, // Vertex 6 (Repeated for continuity)
+    -1.0, // Vertex 6 (Repeated for continuity)
     1.5,
     0.2,
-    1.5, // Vertex 2 (Repeated for continuity)
+    1.0, // Vertex 2 (Repeated for continuity)
     1.5,
     0.1,
-    1.5, // Vertex 1 (Repeated for continuity)
+    1.0, // Vertex 1 (Repeated for continuity)
 
     // Left face
     -1.5,
     0.1,
-    -1.5, // Vertex 4 (Repeated for continuity)
+    -1.0, // Vertex 4 (Repeated for continuity)
     -1.5,
     0.1,
-    1.5, // Vertex 0 (Repeated for continuity)
+    1.0, // Vertex 0 (Repeated for continuity)
     -1.5,
     0.2,
-    1.5, // Vertex 3 (Repeated for continuity)
+    1.0, // Vertex 3 (Repeated for continuity)
     -1.5,
     0.2,
-    -1.5, // Vertex 5 (Repeated for continuity)
+    -1.0, // Vertex 5 (Repeated for continuity)
   ];
 
   // Texture coordinates for the table top
@@ -427,63 +429,63 @@ function drawTableTop() {
 }
 
 function drawTableLeg() {
-  // Vertices for the table legs
+  // Vertices for the table leg
   var vertices = [
     // Front right leg
     1.4,
-    -1.0,
-    1.4, // Vertex 0
+    -0.8,
+    0.9, // Vertex 0
     1.5,
-    -1.0,
-    1.4, // Vertex 1
+    -0.8,
+    0.9, // Vertex 1
     1.5,
-    0.0,
-    1.4, // Vertex 2
+    0.2,
+    0.9, // Vertex 2
     1.4,
-    0.0,
-    1.4, // Vertex 3
+    0.2,
+    0.9, // Vertex 3
 
     // Front left leg
     -1.5,
-    -1.0,
-    1.4, // Vertex 4
+    -0.8,
+    0.9, // Vertex 4
     -1.4,
-    -1.0,
-    1.4, // Vertex 5
+    -0.8,
+    0.9, // Vertex 5
     -1.4,
-    0.0,
-    1.4, // Vertex 6
+    0.2,
+    0.9, // Vertex 6
     -1.5,
-    0.0,
-    1.4, // Vertex 7
+    0.2,
+    0.9, // Vertex 7
 
     // Back left leg
     -1.5,
-    -1.0,
-    -1.4, // Vertex 8
+    -0.8,
+    -0.9, // Vertex 8
     -1.4,
-    -1.0,
-    -1.4, // Vertex 9
+    -0.8,
+    -0.9, // Vertex 9
     -1.4,
-    0.0,
-    -1.4, // Vertex 10
+    0.2,
+    -0.9, // Vertex 10
     -1.5,
-    0.0,
-    -1.4, // Vertex 11
+    0.2,
+    -0.9, // Vertex 11
 
     // Back right leg
     1.4,
-    -1.0,
-    -1.4, // Vertex 12
+    -0.8,
+    -0.9, // Vertex 12
     1.5,
-    -1.0,
-    -1.4, // Vertex 13
+    -0.8,
+    -0.9, // Vertex 13
     1.5,
-    0.0,
-    -1.4, // Vertex 14
+    0.2,
+    -0.9, // Vertex 14
     1.4,
-    0.0,
-    -1.4, // Vertex 15
+    0.2,
+    -0.9, // Vertex 15
   ];
 
   // Texture coordinates for the table legs
@@ -582,87 +584,87 @@ function drawBox() {
   var vertices = [
     // Front face
     -0.5,
+    0.1,
+    0.0, // Vertex 0
+    0.5,
+    0.1,
+    0.0, // Vertex 1
+    0.5,
+    1.1,
+    0.0, // Vertex 2
     -0.5,
-    0.5, // Vertex 0
-    0.5,
-    -0.5,
-    0.5, // Vertex 1
-    0.5,
-    0.5,
-    0.5, // Vertex 2
-    -0.5,
-    0.5,
-    0.5, // Vertex 3
+    1.1,
+    0.0, // Vertex 3
 
     // Back face
     -0.5,
+    0.1,
+    -1.0, // Vertex 4
+    0.5,
+    0.1,
+    -1.0, // Vertex 5
+    0.5,
+    1.1,
+    -1.0, // Vertex 6
     -0.5,
-    -0.5, // Vertex 4
-    0.5,
-    -0.5,
-    -0.5, // Vertex 5
-    0.5,
-    0.5,
-    -0.5, // Vertex 6
-    -0.5,
-    0.5,
-    -0.5, // Vertex 7
+    1.1,
+    -1.0, // Vertex 7
 
     // Top face
     -0.5,
+    1.1,
+    0.0, // Vertex 3 (Repeated for continuity)
     0.5,
-    0.5, // Vertex 3 (Repeated for continuity)
+    1.1,
+    0.0, // Vertex 2 (Repeated for continuity)
     0.5,
-    0.5,
-    0.5, // Vertex 2 (Repeated for continuity)
-    0.5,
-    0.5,
-    -0.5, // Vertex 6 (Repeated for continuity)
+    1.1,
+    -1.0, // Vertex 6 (Repeated for continuity)
     -0.5,
-    0.5,
-    -0.5, // Vertex 7 (Repeated for continuity)
+    1.1,
+    -1.0, // Vertex 7 (Repeated for continuity)
 
     // Bottom face
     -0.5,
-    -0.5,
-    0.5, // Vertex 0 (Repeated for continuity)
+    0.1,
+    0.0, // Vertex 0 (Repeated for continuity)
     0.5,
-    -0.5,
-    0.5, // Vertex 1 (Repeated for continuity)
+    0.1,
+    0.0, // Vertex 1 (Repeated for continuity)
     0.5,
+    0.1,
+    -1.0, // Vertex 5 (Repeated for continuity)
     -0.5,
-    -0.5, // Vertex 5 (Repeated for continuity)
-    -0.5,
-    -0.5,
-    -0.5, // Vertex 4 (Repeated for continuity)
+    0.1,
+    -1.0, // Vertex 4 (Repeated for continuity)
 
     // Right face
     0.5,
-    -0.5,
-    0.5, // Vertex 1 (Repeated for continuity)
+    0.1,
+    0.0, // Vertex 1 (Repeated for continuity)
     0.5,
-    -0.5,
-    -0.5, // Vertex 5 (Repeated for continuity)
+    0.1,
+    -1.0, // Vertex 5 (Repeated for continuity)
     0.5,
+    1.1,
+    -1.0, // Vertex 6 (Repeated for continuity)
     0.5,
-    -0.5, // Vertex 6 (Repeated for continuity)
-    0.5,
-    0.5,
-    0.5, // Vertex 2 (Repeated for continuity)
+    1.1,
+    0.0, // Vertex 2 (Repeated for continuity)
 
     // Left face
     -0.5,
+    0.1,
+    0.0, // Vertex 0 (Repeated for continuity)
     -0.5,
-    0.5, // Vertex 0 (Repeated for continuity)
+    0.1,
+    -1.0, // Vertex 4 (Repeated for continuity)
     -0.5,
+    1.1,
+    -1.0, // Vertex 7 (Repeated for continuity)
     -0.5,
-    -0.5, // Vertex 4 (Repeated for continuity)
-    -0.5,
-    0.5,
-    -0.5, // Vertex 7 (Repeated for continuity)
-    -0.5,
-    0.5,
-    0.5, // Vertex 3 (Repeated for continuity)
+    1.1,
+    0.0, // Vertex 3 (Repeated for continuity)
   ];
 
   // Texture coordinates for the gift box
@@ -805,69 +807,99 @@ function drawBox() {
   gl.drawElements(gl.TRIANGLES, indexList.length, gl.UNSIGNED_BYTE, 0);
 }
 
-function drawChair() {
-  // Vertices for the chair
-  var vertices = [
-    // Seat
-    -0.4,
-    0.0,
-    0.4, // Vertex 0
-    0.4,
-    0.0,
-    0.4, // Vertex 1
-    0.4,
-    0.1,
-    0.4, // Vertex 2
-    -0.4,
-    0.1,
-    0.4, // Vertex 3
+var moveZ = 0.0;
 
-    // Backrest
-    -0.4,
+function drawChairSeat() {
+  // Vertices for the chair seat
+  var chairSeatVertices = [
+    // Front face
+    -0.5,
     0.0,
-    -0.1, // Vertex 4
-    0.4,
+    0.5 + 1.3 + moveZ, // Vertex 0
+    0.5,
     0.0,
-    -0.1, // Vertex 5
-    0.4,
+    0.5 + 1.3 + moveZ, // Vertex 1
+    0.5,
     0.1,
-    -0.1, // Vertex 6
-    -0.4,
+    0.5 + 1.3 + moveZ, // Vertex 2
+    -0.5,
     0.1,
-    -0.1, // Vertex 7
+    0.5 + 1.3 + moveZ, // Vertex 3
 
-    // Front legs
-    -0.3,
-    -0.3,
-    0.3, // Vertex 8
-    0.3,
-    -0.3,
-    0.3, // Vertex 9
-    0.3,
+    // Back face
+    -0.5,
     0.0,
-    0.3, // Vertex 10
-    -0.3,
+    -0.5 + 1.3 + moveZ, // Vertex 4
+    -0.5,
+    0.1,
+    -0.5 + 1.3 + moveZ, // Vertex 5
+    0.5,
+    0.1,
+    -0.5 + 1.3 + moveZ, // Vertex 6
+    0.5,
     0.0,
-    0.3, // Vertex 11
+    -0.5 + 1.3 + moveZ, // Vertex 7
 
-    // Back legs
-    -0.3,
-    -0.3,
-    -0.0, // Vertex 12
-    0.3,
-    -0.3,
-    -0.0, // Vertex 13
-    0.3,
+    // Top face
+    -0.5,
+    0.1,
+    -0.5 + 1.3 + moveZ, // Vertex 8
+    -0.5,
+    0.1,
+    0.5 + 1.3 + moveZ, // Vertex 9
+    0.5,
+    0.1,
+    0.5 + 1.3 + moveZ, // Vertex 10
+    0.5,
+    0.1,
+    -0.5 + 1.3 + moveZ, // Vertex 11
+
+    // Bottom face
+    -0.5,
     0.0,
-    -0.0, // Vertex 14
-    -0.3,
+    -0.5 + 1.3 + moveZ, // Vertex 12
+    0.5,
     0.0,
-    -0.0, // Vertex 15
+    -0.5 + 1.3 + moveZ, // Vertex 13
+    0.5,
+    0.0,
+    0.5 + 1.3 + moveZ, // Vertex 14
+    -0.5,
+    0.0,
+    0.5 + 1.3 + moveZ, // Vertex 15
+
+    // Right face
+    0.5,
+    0.0,
+    -0.5 + 1.3 + moveZ, // Vertex 16
+    0.5,
+    0.1,
+    -0.5 + 1.3 + moveZ, // Vertex 17
+    0.5,
+    0.1,
+    0.5 + 1.3 + moveZ, // Vertex 18
+    0.5,
+    0.0,
+    0.5 + 1.3 + moveZ, // Vertex 19
+
+    // Left face
+    -0.5,
+    0.0,
+    -0.5 + 1.3 + moveZ, // Vertex 20
+    -0.5,
+    0.0,
+    0.5 + 1.3 + moveZ, // Vertex 21
+    -0.5,
+    0.1,
+    0.5 + 1.3 + moveZ, // Vertex 22
+    -0.5,
+    0.1,
+    -0.5 + 1.3 + moveZ, // Vertex 23
   ];
 
-  // Texture coordinates for the chair
-  var textureCoordinates = [
-    // Seat
+  // Texture coordinates for the chair seat
+  var chairSeatTextureCoordinates = [
+    // Front
     0.0,
     0.0, // Vertex 0
     1.0,
@@ -877,7 +909,7 @@ function drawChair() {
     0.0,
     1.0, // Vertex 3
 
-    // Backrest
+    // Back
     0.0,
     0.0, // Vertex 4
     1.0,
@@ -887,7 +919,7 @@ function drawChair() {
     0.0,
     1.0, // Vertex 7
 
-    // Front legs
+    // Top
     0.0,
     0.0, // Vertex 8
     1.0,
@@ -897,7 +929,7 @@ function drawChair() {
     0.0,
     1.0, // Vertex 11
 
-    // Back legs
+    // Bottom
     0.0,
     0.0, // Vertex 12
     1.0,
@@ -906,37 +938,69 @@ function drawChair() {
     1.0, // Vertex 14
     0.0,
     1.0, // Vertex 15
+
+    // Right
+    0.0,
+    0.0, // Vertex 16
+    1.0,
+    0.0, // Vertex 17
+    1.0,
+    1.0, // Vertex 18
+    0.0,
+    1.0, // Vertex 19
+
+    // Left
+    0.0,
+    0.0, // Vertex 20
+    1.0,
+    0.0, // Vertex 21
+    1.0,
+    1.0, // Vertex 22
+    0.0,
+    1.0, // Vertex 23
   ];
 
-  // Index list for rendering the chair
-  var indexList = [
+  // Index list for rendering the chair seat
+  var chairSeatIndices = [
     0,
     1,
     2,
     0,
     2,
-    3, // Seat
+    3, // Front face
     4,
     5,
     6,
     4,
     6,
-    7, // Backrest
+    7, // Back face
     8,
     9,
     10,
     8,
     10,
-    11, // Front legs
+    11, // Top face
     12,
     13,
     14,
     12,
     14,
-    15, // Back legs
+    15, // Bottom face
+    16,
+    17,
+    18,
+    16,
+    18,
+    19, // Right face
+    20,
+    21,
+    22,
+    20,
+    22,
+    23, // Left face
   ];
 
-  var myImage = document.getElementById("deskPicture");
+  var myImage = document.getElementById("chairPicture");
   textureImage = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, textureImage);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -948,12 +1012,12 @@ function drawChair() {
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuffer);
   gl.bufferData(
     gl.ELEMENT_ARRAY_BUFFER,
-    new Uint8Array(indexList),
+    new Uint8Array(chairSeatIndices),
     gl.STATIC_DRAW
   );
   var vertexBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, flatten(vertices), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(chairSeatVertices), gl.STATIC_DRAW);
 
   var vertexPosition = gl.getAttribLocation(myShaderProgram, "vertexPosition");
   gl.vertexAttribPointer(vertexPosition, 3, gl.FLOAT, false, 0, 0);
@@ -961,7 +1025,11 @@ function drawChair() {
 
   var textureBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, flatten(textureCoordinates), gl.STATIC_DRAW);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    flatten(chairSeatTextureCoordinates),
+    gl.STATIC_DRAW
+  );
 
   var texturePosition = gl.getAttribLocation(
     myShaderProgram,
@@ -970,7 +1038,320 @@ function drawChair() {
   gl.vertexAttribPointer(texturePosition, 2, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(texturePosition);
 
-  gl.drawElements(gl.TRIANGLES, indexList.length, gl.UNSIGNED_BYTE, 0);
+  gl.drawElements(gl.TRIANGLES, chairSeatIndices.length, gl.UNSIGNED_BYTE, 0);
+}
+
+function drawChairBackRest() {
+  // Vertices for the chair backrest
+  var chairBackrestVertices = [
+    -0.6,
+    -0.2,
+    0.4 + 1.3 + moveZ, // Vertex 0
+    0.6,
+    -0.2,
+    0.4 + 1.3 + moveZ, // Vertex 1
+    0.6,
+    0.8,
+    0.4 + 1.3 + moveZ, // Vertex 2
+    -0.6,
+    0.8,
+    0.4 + 1.3 + moveZ, // Vertex 3
+  ];
+
+  // Texture coordinates for the chair backrest
+  var chairBackrestTextureCoordinates = [
+    0.0,
+    0.0, // Vertex 0
+    1.0,
+    0.0, // Vertex 1
+    1.0,
+    1.0, // Vertex 2
+    0.0,
+    1.0, // Vertex 3
+  ];
+
+  // Index list for rendering the chair backrest
+  var chairBackrestIndices = [0, 1, 2, 0, 2, 3];
+
+  var myImage = document.getElementById("chairPicture");
+  textureImage = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, textureImage);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, myImage);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+
+  var iBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuffer);
+  gl.bufferData(
+    gl.ELEMENT_ARRAY_BUFFER,
+    new Uint8Array(chairBackrestIndices),
+    gl.STATIC_DRAW
+  );
+  var vertexBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    flatten(chairBackrestVertices),
+    gl.STATIC_DRAW
+  );
+
+  var vertexPosition = gl.getAttribLocation(myShaderProgram, "vertexPosition");
+  gl.vertexAttribPointer(vertexPosition, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(vertexPosition);
+
+  var textureBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    flatten(chairBackrestTextureCoordinates),
+    gl.STATIC_DRAW
+  );
+
+  var texturePosition = gl.getAttribLocation(
+    myShaderProgram,
+    "textureCoordinate"
+  );
+  gl.vertexAttribPointer(texturePosition, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(texturePosition);
+
+  gl.drawElements(
+    gl.TRIANGLES,
+    chairBackrestIndices.length,
+    gl.UNSIGNED_BYTE,
+    0
+  );
+}
+
+function drawChairLegs() {
+  // Vertices for the chair legs
+  var chairLegsVertices = [
+    // Front left leg
+    -0.5,
+    -0.6,
+    0.6 + 1.3 + moveZ, // Vertex 0
+    -0.4,
+    -0.6,
+    0.6 + 1.3 + moveZ, // Vertex 1
+    -0.4,
+    0.0,
+    0.6 + 1.3 + moveZ, // Vertex 2
+    -0.55, // Changed
+    0.0,
+    0.6 + 1.3 + moveZ, // Vertex 3
+
+    // Front right leg
+    0.4,
+    -0.6,
+    0.6 + 1.3 + moveZ, // Vertex 4
+    0.5,
+    -0.6,
+    0.6 + 1.3 + moveZ, // Vertex 5
+    0.55, // Changed
+    0.0,
+    0.6 + 1.3 + moveZ, // Vertex 6
+    0.4,
+    0.0,
+    0.6 + 1.3 + moveZ, // Vertex 7
+
+    // Back left leg
+    -0.55, // Changed
+    -0.6,
+    0.4 + 1.3 + moveZ, // Vertex 8
+    -0.4,
+    -0.6,
+    0.4 + 1.3 + moveZ, // Vertex 9
+    -0.4,
+    0.0,
+    0.4 + 1.3 + moveZ, // Vertex 10
+    -0.55, // Changed
+    0.0,
+    0.4 + 1.3 + moveZ, // Vertex 11
+
+    // Back right leg
+    0.4,
+    -0.6,
+    0.4 + 1.3 + moveZ, // Vertex 12
+    0.6,
+    -0.6,
+    0.4 + 1.3 + moveZ, // Vertex 13
+    0.55, // Changed
+    0.0,
+    0.4 + 1.3 + moveZ, // Vertex 14
+    0.4,
+    0.0,
+    0.4 + 1.3 + moveZ, // Vertex 15
+  ];
+
+  var chairLegsVertices = [
+    // Front left leg
+    -0.5,
+    -0.6,
+    0.5 + 1.3 + moveZ, // Vertex 0
+    -0.4,
+    -0.6,
+    0.5 + 1.3 + moveZ, // Vertex 1
+    -0.4,
+    0.0,
+    0.5 + 1.3 + moveZ, // Vertex 2
+    -0.5,
+    0.0,
+    0.5 + 1.3 + moveZ, // Vertex 3
+
+    // Front right leg
+    0.4,
+    -0.6,
+    0.5 + 1.3 + moveZ, // Vertex 4
+    0.5,
+    -0.6,
+    0.5 + 1.3 + moveZ, // Vertex 5
+    0.5,
+    0.0,
+    0.5 + 1.3 + moveZ, // Vertex 6
+    0.4,
+    0.0,
+    0.5 + 1.3 + moveZ, // Vertex 7
+
+    // Back left leg
+    -0.5,
+    -0.6,
+    0.4 + 1.3 + moveZ, // Vertex 8
+    -0.4,
+    -0.6,
+    0.4 + 1.3 + moveZ, // Vertex 9
+    -0.4,
+    0.0,
+    0.4 + 1.3 + moveZ, // Vertex 10
+    -0.5,
+    0.0,
+    0.4 + 1.3 + moveZ, // Vertex 11
+
+    // Back right leg
+    0.4,
+    -0.6,
+    0.4 + 1.3 + moveZ, // Vertex 12
+    0.5,
+    -0.6,
+    0.4 + 1.3 + moveZ, // Vertex 13
+    0.5,
+    0.0,
+    0.4 + 1.3 + moveZ, // Vertex 14
+    0.4,
+    0.0,
+    0.4 + 1.3 + moveZ, // Vertex 15
+  ];
+
+  // Texture coordinates for the chair legs
+  var chairLegsTextureCoordinates = [
+    // Front left leg
+    0.0,
+    0.0, // Vertex 0
+    1.0,
+    0.0, // Vertex 1
+    1.0,
+    1.0, // Vertex 2
+    0.0,
+    1.0, // Vertex 3
+
+    // Front right leg
+    0.0,
+    0.0, // Vertex 4
+    1.0,
+    0.0, // Vertex 5
+    1.0,
+    1.0, // Vertex 6
+    0.0,
+    1.0, // Vertex 7
+
+    // Back left leg
+    0.0,
+    0.0, // Vertex 8
+    1.0,
+    0.0, // Vertex 9
+    1.0,
+    1.0, // Vertex 10
+    0.0,
+    1.0, // Vertex 11
+
+    // Back right leg
+    0.0,
+    0.0, // Vertex 12
+    1.0,
+    0.0, // Vertex 13
+    1.0,
+    1.0, // Vertex 14
+    0.0,
+    1.0, // Vertex 15
+  ];
+
+  // Index list for rendering the chair legs
+  var chairLegsIndices = [
+    // Front left leg
+    0, 1, 2, 0, 2, 3,
+
+    // Front right leg
+    4, 5, 6, 4, 6, 7,
+
+    // Back left leg
+    8, 9, 10, 8, 10, 11,
+
+    // Back right leg
+    12, 13, 14, 12, 14, 15,
+  ];
+
+  var myImage = document.getElementById("chairPicture");
+  textureImage = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, textureImage);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, myImage);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+
+  var iBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuffer);
+  gl.bufferData(
+    gl.ELEMENT_ARRAY_BUFFER,
+    new Uint8Array(chairLegsIndices),
+    gl.STATIC_DRAW
+  );
+  var vertexBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(chairLegsVertices), gl.STATIC_DRAW);
+
+  var vertexPosition = gl.getAttribLocation(myShaderProgram, "vertexPosition");
+  gl.vertexAttribPointer(vertexPosition, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(vertexPosition);
+
+  var textureBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    flatten(chairLegsTextureCoordinates),
+    gl.STATIC_DRAW
+  );
+
+  var texturePosition = gl.getAttribLocation(
+    myShaderProgram,
+    "textureCoordinate"
+  );
+  gl.vertexAttribPointer(texturePosition, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(texturePosition);
+
+  gl.drawElements(gl.TRIANGLES, chairLegsIndices.length, gl.UNSIGNED_BYTE, 0);
+}
+
+function moveChairForward() {
+  if (moveZ < -0.5) {
+    return alert("You can't move the chair forward anymore!");
+  }
+  moveZ = moveZ - 0.1;
+}
+
+function moveChairBackward() {
+  if (moveZ > 0.5) {
+    return alert("You can't move the chair backward anymore!");
+  }
+  moveZ = moveZ + 0.1;
 }
 
 // Add event listeners to detect keypresses
