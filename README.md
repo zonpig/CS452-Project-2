@@ -3,7 +3,6 @@
 Done by:
 
 Bryan Lim
-Mustapha Jom
 
 ## How to run
 
